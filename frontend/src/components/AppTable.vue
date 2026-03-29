@@ -17,7 +17,14 @@
         <tr v-for="(row, index) in rows" :key="row.id || index">
           <td v-for="column in columns" :key="column.key">
             <slot :name="`cell-${column.key}`" :row="row" :index="index">
-              {{ row[column.key] }}
+              <AppStatusBadge
+                v-if="isBooleanColumn(row[column.key])"
+                :label="row[column.key] ? activeLabel : inactiveLabel"
+                :tone="row[column.key] ? 'success' : 'danger'"
+              />
+              <template v-else>
+                {{ row[column.key] }}
+              </template>
             </slot>
           </td>
         </tr>
@@ -27,10 +34,19 @@
 </template>
 
 <script setup>
+import AppStatusBadge from "./AppStatusBadge.vue";
+
 defineProps({
   columns: { type: Array, default: () => [] },
   rows: { type: Array, default: () => [] },
 });
+
+const activeLabel = "\u0410\u043a\u0442\u0438\u0432\u0435\u043d";
+const inactiveLabel = "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u0435\u043d";
+
+function isBooleanColumn(value) {
+  return typeof value === "boolean";
+}
 </script>
 
 <style scoped>

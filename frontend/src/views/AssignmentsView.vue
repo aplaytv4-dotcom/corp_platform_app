@@ -3,15 +3,23 @@
     <div class="page-card page-section">
       <AppPageHeader :title="t('menu.assignments')">
         <AppButton @click="openCreate">{{ t("actions.create") }}</AppButton>
-        <AppButton variant="secondary" @click="openTransfer">Transfer</AppButton>
+        <AppButton variant="secondary" @click="openTransfer">{{ t("assignments.transfer") }}</AppButton>
       </AppPageHeader>
     </div>
 
     <div class="page-card page-section">
-      <AppTable :columns="columns" :rows="rows">
+      <div class="form-grid assignments-filters">
+        <AppSelect
+          v-model="currentFilter"
+          :label="t('assignments.currentOnly')"
+          :options="filterOptions"
+        />
+      </div>
+
+      <AppTable :columns="columns" :rows="filteredRows">
         <template #cell-actions="{ row }">
           <div class="toolbar-row">
-            <AppButton variant="danger" @click="closeAssignment(row)">Close</AppButton>
+            <AppButton v-if="row.is_current" variant="danger" @click="closeAssignment(row)">{{ t("assignments.close") }}</AppButton>
           </div>
         </template>
       </AppTable>
@@ -43,6 +51,7 @@ import { staffUnitsApi } from "@/api/staffUnitsApi";
 import AppButton from "@/components/AppButton.vue";
 import AppModal from "@/components/AppModal.vue";
 import AppPageHeader from "@/components/AppPageHeader.vue";
+import AppSelect from "@/components/AppSelect.vue";
 import AppTable from "@/components/AppTable.vue";
 import AssignmentForm from "@/components/AssignmentForm.vue";
 
@@ -54,6 +63,7 @@ const positions = ref([]);
 const staffUnits = ref([]);
 const modalOpen = ref(false);
 const mode = ref("create");
+const currentFilter = ref("true");
 
 const form = reactive({
   employee: "",
@@ -65,17 +75,31 @@ const form = reactive({
 });
 
 const columns = computed(() => [
-  { key: "employee_name", label: "Employee" },
-  { key: "department_name", label: "Department" },
-  { key: "staff_unit_number", label: "Staff unit" },
-  { key: "actual_position_name", label: "Actual position" },
-  { key: "start_date", label: "Start date" },
-  { key: "end_date", label: "End date" },
-  { key: "is_current", label: "Current" },
+  { key: "employee_name", label: t("assignments.employee") },
+  { key: "department_name", label: t("assignments.department") },
+  { key: "staff_unit_number", label: t("assignments.staffUnit") },
+  { key: "actual_position_name", label: t("assignments.actualPosition") },
+  { key: "start_date", label: t("assignments.startDate") },
+  { key: "end_date", label: t("assignments.endDate") },
+  { key: "is_current", label: t("assignments.current") },
   { key: "actions", label: "" },
 ]);
 
-const modalTitle = computed(() => (mode.value === "transfer" ? "Transfer" : "Create assignment"));
+const filterOptions = computed(() => [
+  { value: "true", label: t("assignments.current") },
+  { value: "false", label: t("assignments.closed") },
+  { value: "all", label: t("assignments.all") },
+]);
+
+const filteredRows = computed(() => {
+  if (currentFilter.value === "all") {
+    return rows.value;
+  }
+  const isCurrent = currentFilter.value === "true";
+  return rows.value.filter((row) => Boolean(row.is_current) === isCurrent);
+});
+
+const modalTitle = computed(() => (mode.value === "transfer" ? t("assignments.transfer") : t("assignments.createAssignment")));
 
 const employeeOptions = computed(() => employees.value.map((item) => ({ value: item.id, label: `${item.short_fio} (${item.personnel_number})` })));
 const staffUnitOptions = computed(() => staffUnits.value.map((item) => ({ value: item.id, label: `${item.department_name} / ${item.unit_number}` })));
@@ -146,3 +170,10 @@ async function closeAssignment(row) {
 
 onMounted(loadData);
 </script>
+
+<style scoped>
+.assignments-filters {
+  margin-bottom: 16px;
+  max-width: 240px;
+}
+</style>

@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
@@ -26,7 +26,7 @@ import AppLoader from "@/components/AppLoader.vue";
 import AppPageHeader from "@/components/AppPageHeader.vue";
 import ReportToolbar from "@/components/ReportToolbar.vue";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const htmlContent = ref("");
 const frameRef = ref(null);
@@ -34,12 +34,14 @@ const frameRef = ref(null);
 const isDaily = route.query.type !== "summary";
 
 function buildParams() {
+  const lang = locale.value || localStorage.getItem("ui.language") || "ru";
   if (isDaily) {
-    return { sheet_id: route.query.sheet_id };
+    return { sheet_id: route.query.sheet_id, lang };
   }
   return {
     start_date: route.query.start_date,
     end_date: route.query.end_date,
+    lang,
   };
 }
 
@@ -60,7 +62,7 @@ async function downloadBlob(request, filename) {
 }
 
 function downloadWord() {
-  return downloadBlob(isDaily ? reportsApi.dailyWord : reportsApi.summaryWord, isDaily ? "daily-report.rtf" : "summary-report.rtf");
+  return downloadBlob(isDaily ? reportsApi.dailyWord : reportsApi.summaryWord, isDaily ? "daily-report.doc" : "summary-report.doc");
 }
 
 function downloadPdf() {
@@ -72,6 +74,12 @@ function printReport() {
 }
 
 onMounted(loadPreview);
+watch(
+  () => locale.value,
+  () => {
+    loadPreview();
+  },
+);
 </script>
 
 <style scoped>

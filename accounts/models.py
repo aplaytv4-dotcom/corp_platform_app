@@ -2,6 +2,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from common.models import TimeStampedModel
 
@@ -34,13 +35,13 @@ class UserManager(BaseUserManager):
 
 class User(TimeStampedModel, AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
-        ADMIN = "admin", "Admin"
-        MANAGER = "manager", "Manager"
+        ADMIN = "admin", _("Администратор")
+        MANAGER = "manager", _("Руководитель")
 
     class ScopeType(models.TextChoices):
-        ALL = "all", "All"
-        MANAGEMENT = "management", "Management"
-        DEPARTMENT = "department", "Department"
+        ALL = "all", _("Все")
+        MANAGEMENT = "management", _("Управление")
+        DEPARTMENT = "department", _("Отдел")
 
     username = models.CharField(max_length=150, unique=True)
     full_name = models.CharField(max_length=255)
@@ -69,12 +70,13 @@ class User(TimeStampedModel, AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         ordering = ["username"]
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
     def clean(self):
         errors = {}
-        if self.role == self.Role.ADMIN:
-            if self.scope_type != self.ScopeType.ALL:
-                errors["scope_type"] = "Admin must have all scope."
+        if self.role == self.Role.ADMIN and self.scope_type != self.ScopeType.ALL:
+            errors["scope_type"] = "Admin must have all scope."
         if self.scope_type == self.ScopeType.MANAGEMENT and not self.management_id:
             errors["management"] = "Management is required for management scope."
         if self.scope_type == self.ScopeType.DEPARTMENT and not self.department_id:

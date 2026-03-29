@@ -1,11 +1,11 @@
 export const assignmentFilters = [
   {
     key: "current",
-    label: "Current only",
+    labelKey: "assignments.currentOnly",
     component: "AppSelect",
     options: [
-      { value: "true", label: "Current" },
-      { value: "false", label: "Closed" },
+      { value: "true", labelKey: "assignments.current" },
+      { value: "false", labelKey: "assignments.closed" },
     ],
     match: (row, value) => String(row.is_current) === String(value === "true"),
   },

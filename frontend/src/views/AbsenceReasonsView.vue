@@ -3,7 +3,7 @@
     ref="pageRef"
     :title="t('menu.absenceReasons')"
     :columns="columns"
-    :fields="config.fields"
+    :fields="fields"
     :list-fn="absenceReasonsApi.list"
     :create-fn="absenceReasonsApi.create"
     :update-fn="auth.isAdmin ? absenceReasonsApi.update : null"
@@ -32,5 +32,18 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const pageRef = ref(null);
 
-const columns = computed(() => [...config.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...config.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+
+const fields = computed(() =>
+  config.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+  })),
+);
 </script>

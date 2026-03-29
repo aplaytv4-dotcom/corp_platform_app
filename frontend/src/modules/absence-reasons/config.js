@@ -1,13 +1,13 @@
 export const absenceReasonsConfig = {
   columns: [
-    { key: "name", label: "Name" },
-    { key: "code", label: "Code" },
-    { key: "is_active", label: "Active" },
+    { key: "name", labelKey: "absenceReasons.name" },
+    { key: "code", labelKey: "absenceReasons.code" },
+    { key: "is_active", labelKey: "absenceReasons.isActive" },
   ],
   fields: [
-    { key: "name", label: "Name", type: "text" },
-    { key: "code", label: "Code", type: "text" },
-    { key: "is_active", label: "Active", type: "boolean" },
+    { key: "name", labelKey: "absenceReasons.name", type: "text" },
+    { key: "code", labelKey: "absenceReasons.code", type: "text" },
+    { key: "is_active", labelKey: "absenceReasons.isActive", type: "boolean" },
   ],
   initialForm: {
     name: "",

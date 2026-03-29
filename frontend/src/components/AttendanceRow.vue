@@ -16,7 +16,7 @@
       <span v-else class="muted">—</span>
     </td>
     <td>
-      <AppTextarea v-model="localRow.note" rows="2" @update:model-value="emitUpdate" />
+      <AppTextarea v-model="localRow.note" compact rows="1" class="attendance-note" @update:model-value="emitUpdate" />
     </td>
   </tr>
 </template>
@@ -50,7 +50,25 @@ const statusOptions = [
   { value: "absent", label: t("attendance.absent") },
 ];
 
+watch(
+  () => localRow.status,
+  (value) => {
+    if (value === "present") {
+      localRow.absence_reason = null;
+      localRow.note = "";
+      emitUpdate();
+    }
+  },
+);
+
 function emitUpdate() {
   emit("update", { ...localRow });
 }
 </script>
+
+<style scoped>
+.attendance-note {
+  min-width: 150px;
+  max-width: 170px;
+}
+</style>

@@ -288,6 +288,10 @@ Frontend npm пакеты:
 - vite
 - @vitejs/plugin-vue
 
+Дополнительно для backend PDF:
+
+- reportlab
+
 
 ==================================================
 6. ПРЕДВАРИТЕЛЬНЫЕ ТРЕБОВАНИЯ
@@ -393,7 +397,11 @@ Frontend .env:
 
 Frontend:
 
-    http://127.0.0.1:5173
+    http://localhost:5173
+
+Примечание:
+
+    если http://127.0.0.1:5173 не открывается, используйте http://localhost:5173
 
 Backend API:
 
@@ -418,6 +426,30 @@ Django admin:
 - login: manager_dep
 - password: manager12345
 
+Руководитель управления:
+
+- login: manager_main
+- password: manager12345
+
+Начальники отделов:
+
+- login: head_dep_hr
+- password: manager12345
+
+- login: head_dep_it
+- password: manager12345
+
+- login: head_dep_fin
+- password: manager12345
+
+- login: head_dep_sec
+- password: manager12345
+
+Дополнительный тестовый начальник старого отдела:
+
+- login: head_dep_1
+- password: manager12345
+
 
 ==================================================
 12. БЫСТРАЯ РУЧНАЯ ПРОВЕРКА
@@ -425,7 +457,7 @@ Django admin:
 
 1. Открыть frontend:
 
-    http://127.0.0.1:5173/login
+    http://localhost:5173/login
 
 2. Войти под admin:
 
@@ -502,3 +534,104 @@ Git уже инициализирован.
 - Swagger/OpenAPI
 - e2e тесты
 - UI polishing
+
+IMPORTANT UPDATE
+================
+
+Frontend dev URL:
+
+    http://localhost:5173
+
+Если http://127.0.0.1:5173 не открывается, используйте localhost.
+
+Команда для полной пересборки тестовых данных:
+
+    python manage.py reseed_demo_data
+
+Эта команда:
+
+- пересоздаёт демо-данные
+- обновляет тестовые логины
+- восстанавливает пароль admin: admin12345
+- помогает после проблем с кодировкой в старых тестовых данных
+
+Отчеты:
+
+- HTML preview, Word и PDF теперь используют текущий язык интерфейса frontend
+- для preview отчетов frontend передает параметр lang в backend
+- в ежедневном отчете пустые колонки автоматически скрываются
+- если в выбранном табеле нет причин и примечаний, колонки "Причина" и "Примечание" не показываются
+- табельный номер исключен из всех отчетов
+- в ежедневные отчеты добавлен порядковый номер строки сотрудника
+- в ежедневных отчетах отображается фактическая должность сотрудника отдельной колонкой
+- PDF отчеты теперь собираются через reportlab с Unicode-шрифтом и корректно показывают кириллицу
+- HTML preview, Word и PDF оформлены в деловом стиле с таблицами
+- основной шрифт отчетов: Times New Roman
+- размер основного текста отчетов: 14
+- размер заголовков отчетов: 16
+- даты в отчетах выводятся в человекочитаемом формате, например: 15 апреля 2026 года
+- в ежедневный отчет добавлен блок подписи начальника отдела
+- в блоке подписи есть должность, место для подписи, Ф.И.О. и дата
+- на экране сотрудников переведены таблица, поиск, статус и форма создания/редактирования
+- на экране штатных единиц переведены таблица, подзаголовок, форма и статусы
+ 
+==================================================
+15. IMPORTANT UPDATE
+==================================================
+ 
+Frontend dev URL:
+ 
+    http://localhost:5173
+ 
+Если http://127.0.0.1:5173 не открывается, используйте localhost.
+ 
+Команда для полной пересборки тестовых данных:
+ 
+    python manage.py reseed_demo_data
+ 
+Эта команда:
+ 
+- пересоздаёт демо-данные
+- обновляет тестовые логины
+- восстанавливает пароль admin: admin12345
+- исправляет тестовую базу после проблем с кодировкой в старых seed-данных
+ 
+==================================================
+16. REPORT SIGNATURE UPDATE
+==================================================
+ 
+- In the daily report signature block, the department head name is now taken from the current employee assignment for the selected department.
+- Priority:
+  1. active assignment with actual position "Начальник отдела"
+  2. active assignment with staff position "Начальник отдела"
+  3. fallback to manager user profile for the department
+- This applies to HTML preview, Word, and PDF.
+- The department head name is shown in short F.I.O. format, for example: "Иванов И.И."
+- The Positions screen now uses i18n-based table and form labels for both Russian and Uzbek.
+- CRUD sections now use i18n-based table headers and form labels for Russian and Uzbek:
+  Absence Reasons, Managements, Departments, Positions, Users, Employees, Staff Units, Assignments.
+- Report preview now reloads when RU/UZ is switched, so the report content follows the current interface language.
+- Daily reports now include a summary block:
+  total staff, present count, absent count, and absence breakdown by reason.
+- Signature block in reports is centered more neatly, and the hint labels are shown in parentheses.
+- In daily reports, the small date at the top left is the report generation date, while the date under the department head signature is the report date itself.
+- Daily report header now shows: "Ежедневный отчет по посещаемости за <date>" aligned to the right.
+- Daily report summary is now a right-aligned text block:
+  staff total, present total, absent total, and each absence reason with employee F.I.O. list.
+- Daily report layout updated:
+  title centered in two lines, department and totals aligned left, absence reasons visually highlighted in a separate block.
+- On the attendance screen, the "Примечание" field is now compact in height and closer in size to the other working inputs.
+- CRUD forms now show backend validation errors directly in the modal instead of failing silently.
+- Attendance sheet sync now includes only active employees on active staff units.
+- When a sheet is reopened, rows for employees who no longer belong in the sheet are removed automatically.
+- Report signature block now uses only an active current head-of-department assignment on an active staff unit.
+- If there is no active department head assignment, the F.I.O. field in the report signature stays empty.
+- If the department head is absent, inactive, or assigned to an inactive staff unit, the report signature now falls back to the next active employee in the department based on the configured position hierarchy for the report date.
+- Daily report rows are now rebuilt against active assignments on the report date, so employees from inactive staff units do not appear in the report preview even if the sheet had been opened earlier.
+- In the report signature, when the department head is absent, the report now shows the actual position and short F.I.O. of the next active employee in the hierarchy for that report date.
+- Positions now have a configurable hierarchy_order field shown in the UI as "Тарифная сетка" / "Tarif setkasi". Reports and signatory replacement use it instead of the old hardcoded hierarchy list.
+- hierarchy_order for positions is entered manually when creating a position; it is no longer auto-filled by default in the form.
+- Tariff grid semantics: the higher the value, the more senior the position. Signatory fallback and replacement logic now choose the employee with the highest tariff grade among active assignments.
+- On the Assignments screen, records are historical. The UI now shows current assignments by default, and closed records can be viewed separately through the filter.
+- On the attendance screen, if status is set to "present", the absence reason and note are now cleared automatically in the UI and also forcibly cleared on backend save.
+- In the daily report title, the second line with the report date is now shown in regular weight instead of bold.

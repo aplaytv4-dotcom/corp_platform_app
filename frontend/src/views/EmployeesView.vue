@@ -2,7 +2,7 @@
   <AppCrudPage
     ref="pageRef"
     :title="t('menu.employees')"
-    :subtitle="auth.isAdmin ? 'CRUD' : 'Read only'"
+    :subtitle="auth.isAdmin ? t('employees.subtitleAdmin') : t('employees.subtitleReadonly')"
     :columns="columns"
     :filters="filters"
     :fields="[]"
@@ -16,7 +16,7 @@
     :custom-cell-keys="['full_name', 'actions']"
   >
     <template #cell-full_name="{ row }">
-      {{ [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(' ') }}
+      {{ [row.last_name, row.first_name, row.middle_name].filter(Boolean).join(" ") }}
     </template>
     <template #cell-actions="{ row }">
       <AppButton v-if="auth.isAdmin" variant="secondary" @click="pageRef.startEdit(row)">{{ t("actions.edit") }}</AppButton>
@@ -41,12 +41,12 @@ const pageRef = ref(null);
 
 const columns = computed(() => [
   { key: "full_name", label: t("attendance.fio") },
-  { key: "short_fio", label: "Short FIO" },
-  { key: "personnel_number", label: "Personnel #" },
-  { key: "department_name", label: "Department" },
-  { key: "staff_position_name", label: "Staff position" },
-  { key: "actual_position_name", label: "Actual position" },
-  { key: "is_active", label: "Active" },
+  { key: "short_fio", label: t("employees.shortFio") },
+  { key: "personnel_number", label: t("employees.personnelNumber") },
+  { key: "department_name", label: t("employees.department") },
+  { key: "staff_position_name", label: t("employees.staffPosition") },
+  { key: "actual_position_name", label: t("employees.actualPosition") },
+  { key: "is_active", label: t("employees.isActive") },
   { key: "actions", label: "" },
 ]);
 
@@ -58,5 +58,10 @@ const initialForm = {
   is_active: true,
 };
 
-const filters = employeeFilters;
+const filters = computed(() =>
+  employeeFilters.map((filter) => ({
+    ...filter,
+    label: filter.labelKey ? t(filter.labelKey) : filter.label,
+  })),
+);
 </script>

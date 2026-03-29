@@ -10,6 +10,8 @@ class Management(TimeStampedModel):
 
     class Meta:
         ordering = ["name"]
+        verbose_name = "Управление"
+        verbose_name_plural = "Управления"
 
     def __str__(self):
         return self.name
@@ -23,6 +25,8 @@ class Department(TimeStampedModel):
 
     class Meta:
         ordering = ["management__name", "name"]
+        verbose_name = "Отдел"
+        verbose_name_plural = "Отделы"
         constraints = [
             models.UniqueConstraint(fields=["management", "code"], name="uniq_department_code_per_management"),
         ]

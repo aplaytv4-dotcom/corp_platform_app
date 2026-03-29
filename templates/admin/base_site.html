@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block usertools %}
+{{ block.super }}
+<form action="{% url 'set_language' %}" method="post" style="display:inline-flex; gap:6px; margin-left:12px; align-items:center;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" name="language" value="ru" style="border:1px solid #8fb3c9; background:#ffffff; color:#1f4f68; padding:4px 8px; border-radius:999px; cursor:pointer;">
+        RU
+    </button>
+    <button type="submit" name="language" value="uz" style="border:1px solid #8fb3c9; background:#ffffff; color:#1f4f68; padding:4px 8px; border-radius:999px; cursor:pointer;">
+        UZ
+    </button>
+</form>
+{% endblock %}

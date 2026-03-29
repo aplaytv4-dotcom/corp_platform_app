@@ -2,8 +2,9 @@
   <AppCrudPage
     ref="pageRef"
     :title="t('menu.staffUnits')"
+    :subtitle="t('staffUnits.subtitle')"
     :columns="columns"
-    :fields="config.fields"
+    :fields="fields"
     :list-fn="staffUnitsApi.list"
     :create-fn="staffUnitsApi.create"
     :update-fn="staffUnitsApi.update"
@@ -32,7 +33,19 @@ const { t } = useI18n();
 const pageRef = ref(null);
 const referenceStore = useReferenceStore();
 const config = useStaffUnitsConfig(referenceStore);
-const columns = computed(() => [...config.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...config.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+const fields = computed(() =>
+  config.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+  })),
+);
 
 onMounted(async () => {
   await Promise.all([referenceStore.loadDepartments(), referenceStore.loadPositions()]);

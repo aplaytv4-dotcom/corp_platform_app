@@ -1,17 +1,20 @@
 export const positionsConfig = {
   columns: [
-    { key: "name", label: "Name" },
-    { key: "short_name", label: "Short name" },
-    { key: "is_active", label: "Active" },
+    { key: "name", labelKey: "positions.name" },
+    { key: "short_name", labelKey: "positions.shortName" },
+    { key: "hierarchy_order", labelKey: "positions.tariffGrade" },
+    { key: "is_active", labelKey: "positions.isActive" },
   ],
   fields: [
-    { key: "name", label: "Name", type: "text" },
-    { key: "short_name", label: "Short name", type: "text" },
-    { key: "is_active", label: "Active", type: "boolean" },
+    { key: "name", labelKey: "positions.name", type: "text" },
+    { key: "short_name", labelKey: "positions.shortName", type: "text" },
+    { key: "hierarchy_order", labelKey: "positions.tariffGrade", type: "number" },
+    { key: "is_active", labelKey: "positions.isActive", type: "boolean" },
   ],
   initialForm: {
     name: "",
     short_name: "",
+    hierarchy_order: "",
     is_active: true,
   },
 };

@@ -3,6 +3,7 @@ from django.db.models import Count, Q
 from attendance.models import AbsenceReason, AttendanceSheet
 from common.permissions import user_has_department_access
 from organization.selectors import get_departments_for_user
+from staff.selectors import get_assignments_for_department_on_date
 
 
 def get_absence_reasons_queryset():
@@ -21,14 +22,22 @@ def get_sheet_or_none_for_user(user, sheet_id):
 
 
 def build_daily_report_data(sheet):
-    items = sheet.items.select_related("employee", "absence_reason").all()
+    valid_assignments = list(get_assignments_for_department_on_date(sheet.department, sheet.date))
+    valid_by_employee_id = {assignment.employee_id: assignment for assignment in valid_assignments}
+    items = [
+        item
+        for item in sheet.items.select_related("employee", "absence_reason").all()
+        if item.employee_id in valid_by_employee_id
+    ]
     return {
         "sheet_id": sheet.id,
         "date": sheet.date.isoformat(),
         "department": sheet.department.name,
         "rows": [
             {
+                "employee_id": item.employee_id,
                 "employee": item.employee.short_fio,
+                "actual_position": valid_by_employee_id[item.employee_id].actual_position.name,
                 "personnel_number": item.employee.personnel_number,
                 "status": item.status,
                 "absence_reason": item.absence_reason.name if item.absence_reason else "",

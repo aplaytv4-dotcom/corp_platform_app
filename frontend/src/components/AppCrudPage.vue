@@ -22,7 +22,7 @@
       <AppLoader v-if="loading" />
       <AppTable v-else :columns="columns" :rows="filteredRows">
         <template #empty>
-          <AppEmptyState title="Нет данных" />
+          <AppEmptyState :title="emptyTitle" />
         </template>
         <template v-for="column in customCellKeys" #[`cell-${column}`]="slotProps">
           <slot :name="`cell-${column}`" v-bind="slotProps" />
@@ -40,7 +40,7 @@
       <div v-else class="form-grid">
         <template v-for="field in fields" :key="field.key">
           <AppInput
-            v-if="field.type === 'text' || field.type === 'password' || field.type === 'date'"
+            v-if="field.type === 'text' || field.type === 'password' || field.type === 'date' || field.type === 'number'"
             v-model="formState[field.key]"
             :label="field.label"
             :type="field.type === 'text' ? 'text' : field.type"
@@ -64,9 +64,10 @@
           />
         </template>
       </div>
+      <div v-if="submitError" class="form-submit-error">{{ submitError }}</div>
       <div class="toolbar-row" style="margin-top: 16px;">
         <AppButton @click="submit">{{ saveLabel }}</AppButton>
-        <AppButton variant="secondary" @click="closeModal">Отмена</AppButton>
+        <AppButton variant="secondary" @click="closeModal">{{ cancelLabel }}</AppButton>
       </div>
     </AppModal>
   </div>
@@ -97,8 +98,8 @@ const props = defineProps({
   initialForm: { type: Object, default: () => ({}) },
   canCreate: { type: Boolean, default: false },
   canEdit: { type: Boolean, default: false },
-  createLabel: { type: String, default: "Создать" },
-  saveLabel: { type: String, default: "Сохранить" },
+  createLabel: { type: String, default: "\u0421\u043e\u0437\u0434\u0430\u0442\u044c" },
+  saveLabel: { type: String, default: "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c" },
   customFormComponent: { type: [Object, Function], default: null },
   customFormProps: { type: Object, default: () => ({}) },
   customCellKeys: { type: Array, default: () => [] },
@@ -106,16 +107,20 @@ const props = defineProps({
 
 const emit = defineEmits(["loaded"]);
 
+const emptyTitle = "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445";
+const cancelLabel = "\u041e\u0442\u043c\u0435\u043d\u0430";
+
 const loading = ref(false);
 const rows = ref([]);
 const modalOpen = ref(false);
 const editingRow = ref(null);
+const submitError = ref("");
 const formState = reactive({});
 const filterState = reactive({});
 
 const booleanOptions = [
-  { value: true, label: "Active" },
-  { value: false, label: "Inactive" },
+  { value: true, label: "\u0410\u043a\u0442\u0438\u0432\u0435\u043d" },
+  { value: false, label: "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u0435\u043d" },
 ];
 
 const componentMap = {
@@ -124,7 +129,11 @@ const componentMap = {
   AppTextarea,
 };
 
-const modalTitle = computed(() => (editingRow.value ? "Редактирование" : "Создание"));
+const modalTitle = computed(() =>
+  editingRow.value
+    ? "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435"
+    : "\u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435",
+);
 
 const filteredRows = computed(() => {
   return rows.value.filter((row) =>
@@ -173,6 +182,7 @@ async function loadRows() {
 
 function openCreate() {
   editingRow.value = null;
+  submitError.value = "";
   resetForm();
   modalOpen.value = true;
 }
@@ -180,17 +190,34 @@ function openCreate() {
 function closeModal() {
   modalOpen.value = false;
   editingRow.value = null;
+  submitError.value = "";
+}
+
+function normalizeErrorMessage(error) {
+  const data = error?.response?.data;
+  if (!data) return "Не удалось сохранить запись.";
+  if (typeof data === "string") return data;
+  if (Array.isArray(data)) return data.join(" ");
+  const parts = Object.entries(data).map(([key, value]) => {
+    const text = Array.isArray(value) ? value.join(" ") : String(value);
+    return key === "detail" ? text : `${key}: ${text}`;
+  });
+  return parts.join(" | ");
 }
 
 async function submit() {
   const allowedKeys = Object.keys(props.initialForm);
-  const payload = Object.fromEntries(
-    allowedKeys.map((key) => [key, formState[key]]),
-  );
-  if (editingRow.value && props.updateFn) {
-    await props.updateFn(editingRow.value.id, payload);
-  } else if (props.createFn) {
-    await props.createFn(payload);
+  const payload = Object.fromEntries(allowedKeys.map((key) => [key, formState[key]]));
+  submitError.value = "";
+  try {
+    if (editingRow.value && props.updateFn) {
+      await props.updateFn(editingRow.value.id, payload);
+    } else if (props.createFn) {
+      await props.createFn(payload);
+    }
+  } catch (error) {
+    submitError.value = normalizeErrorMessage(error);
+    return;
   }
   closeModal();
   await loadRows();
@@ -199,6 +226,7 @@ async function submit() {
 function startEdit(row) {
   if (!props.canEdit) return;
   editingRow.value = row;
+  submitError.value = "";
   resetForm(row);
   modalOpen.value = true;
 }
@@ -216,3 +244,12 @@ onMounted(() => {
   loadRows();
 });
 </script>
+
+<style scoped>
+.form-submit-error {
+  margin-top: 12px;
+  color: var(--danger);
+  font-size: 14px;
+  line-height: 1.4;
+}
+</style>

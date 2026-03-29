@@ -41,10 +41,14 @@ def get_assignments_for_department_on_date(department, target_date):
     return EmployeeAssignment.objects.select_related(
         "employee",
         "staff_unit",
+        "staff_unit__staff_position",
         "actual_position",
         "staff_unit__department",
     ).filter(
+        is_current=True,
         staff_unit__department=department,
+        staff_unit__is_active=True,
+        employee__is_active=True,
         start_date__lte=target_date,
     ).filter(
         Q(end_date__isnull=True) | Q(end_date__gte=target_date)

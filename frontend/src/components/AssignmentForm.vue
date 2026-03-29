@@ -1,16 +1,17 @@
 <template>
   <div class="form-grid">
-    <AppSelect v-model="form.employee" :label="'Employee'" :options="employeeOptions" />
-    <AppSelect v-model="form.staff_unit" :label="'Staff unit'" :options="staffUnitOptions" />
-    <AppSelect v-model="form.actual_position" :label="'Actual position'" :options="positionOptions" />
-    <AppInput v-model="form.start_date" :label="'Start date'" type="date" />
-    <AppInput v-model="form.end_date" :label="'End date'" type="date" />
-    <AppTextarea v-model="form.note" :label="'Note'" />
+    <AppSelect v-model="form.employee" :label="t('assignments.employee')" :options="employeeOptions" />
+    <AppSelect v-model="form.staff_unit" :label="t('assignments.staffUnit')" :options="staffUnitOptions" />
+    <AppSelect v-model="form.actual_position" :label="t('assignments.actualPosition')" :options="positionOptions" />
+    <AppInput v-model="form.start_date" :label="t('assignments.startDate')" type="date" />
+    <AppInput v-model="form.end_date" :label="t('assignments.endDate')" type="date" />
+    <AppTextarea v-model="form.note" :label="t('attendance.note')" />
   </div>
 </template>
 
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 
 import AppInput from "./AppInput.vue";
 import AppSelect from "./AppSelect.vue";
@@ -24,6 +25,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["update:modelValue"]);
+const { t } = useI18n();
 
 const form = computed({
   get: () => props.modelValue,

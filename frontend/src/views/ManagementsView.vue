@@ -3,7 +3,7 @@
     ref="pageRef"
     :title="t('menu.managements')"
     :columns="columns"
-    :fields="managementsConfig.fields"
+    :fields="fields"
     :list-fn="managementsApi.list"
     :create-fn="managementsApi.create"
     :update-fn="managementsApi.update"
@@ -29,5 +29,17 @@ import { managementsConfig } from "@/modules/managements/config";
 
 const { t } = useI18n();
 const pageRef = ref(null);
-const columns = computed(() => [...managementsConfig.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...managementsConfig.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+const fields = computed(() =>
+  managementsConfig.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+  })),
+);
 </script>

@@ -3,7 +3,7 @@
     ref="pageRef"
     :title="t('menu.users')"
     :columns="columns"
-    :fields="config.fields"
+    :fields="fields"
     :list-fn="usersApi.list"
     :create-fn="usersApi.create"
     :update-fn="usersApi.update"
@@ -33,7 +33,26 @@ const pageRef = ref(null);
 const referenceStore = useReferenceStore();
 const config = useUsersConfig(referenceStore);
 
-const columns = computed(() => [...config.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...config.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+
+const fields = computed(() =>
+  config.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+    options: Array.isArray(field.options)
+      ? field.options.map((option) => ({
+          ...option,
+          label: option.labelKey ? t(option.labelKey) : option.label,
+        }))
+      : field.options,
+  })),
+);
 
 onMounted(async () => {
   await Promise.all([referenceStore.loadDepartments(), referenceStore.loadManagements()]);

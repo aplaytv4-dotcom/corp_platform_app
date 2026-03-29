@@ -1,13 +1,13 @@
 export const managementsConfig = {
   columns: [
-    { key: "name", label: "Name" },
-    { key: "code", label: "Code" },
-    { key: "is_active", label: "Active" },
+    { key: "name", labelKey: "managements.name" },
+    { key: "code", labelKey: "managements.code" },
+    { key: "is_active", labelKey: "managements.isActive" },
   ],
   fields: [
-    { key: "name", label: "Name", type: "text" },
-    { key: "code", label: "Code", type: "text" },
-    { key: "is_active", label: "Active", type: "boolean" },
+    { key: "name", labelKey: "managements.name", type: "text" },
+    { key: "code", labelKey: "managements.code", type: "text" },
+    { key: "is_active", labelKey: "managements.isActive", type: "boolean" },
   ],
   initialForm: {
     name: "",

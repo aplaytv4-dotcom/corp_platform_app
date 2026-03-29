@@ -3,7 +3,7 @@
     ref="pageRef"
     :title="t('menu.positions')"
     :columns="columns"
-    :fields="positionsConfig.fields"
+    :fields="fields"
     :list-fn="positionsApi.list"
     :create-fn="positionsApi.create"
     :update-fn="positionsApi.update"
@@ -29,5 +29,18 @@ import { positionsConfig } from "@/modules/positions/config";
 
 const { t } = useI18n();
 const pageRef = ref(null);
-const columns = computed(() => [...positionsConfig.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...positionsConfig.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+
+const fields = computed(() =>
+  positionsConfig.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+  })),
+);
 </script>

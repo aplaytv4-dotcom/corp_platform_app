@@ -68,13 +68,50 @@ const menuItems = computed(() => buildMenu({ t, isAdmin: auth.isAdmin }));
   gap: 8px;
 }
 .nav-link {
+  position: relative;
   padding: 12px 14px;
   border-radius: 10px;
   color: rgba(255,255,255,0.88);
+  border: 1px solid transparent;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.nav-link::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03));
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.nav-link:hover {
+  color: white;
+  border-color: rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.08);
+  transform: translateX(3px);
+  box-shadow: 0 10px 24px rgba(4, 15, 29, 0.18);
+}
+.nav-link:hover::before {
+  opacity: 1;
+}
+.nav-link:focus-visible {
+  outline: none;
+  color: white;
+  border-color: rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.14);
 }
 .nav-link.router-link-active {
-  background: rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.18);
   color: white;
+  box-shadow: inset 3px 0 0 rgba(255,255,255,0.85);
 }
 .content {
   display: grid;

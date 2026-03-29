@@ -3,7 +3,7 @@
     ref="pageRef"
     :title="t('menu.departments')"
     :columns="columns"
-    :fields="config.fields"
+    :fields="fields"
     :list-fn="departmentsApi.list"
     :create-fn="departmentsApi.create"
     :update-fn="departmentsApi.update"
@@ -32,7 +32,19 @@ const { t } = useI18n();
 const pageRef = ref(null);
 const referenceStore = useReferenceStore();
 const config = useDepartmentsConfig(referenceStore);
-const columns = computed(() => [...config.columns, { key: "actions", label: "" }]);
+const columns = computed(() => [
+  ...config.columns.map((column) => ({
+    ...column,
+    label: t(column.labelKey),
+  })),
+  { key: "actions", label: "" },
+]);
+const fields = computed(() =>
+  config.fields.map((field) => ({
+    ...field,
+    label: t(field.labelKey),
+  })),
+);
 
 onMounted(() => referenceStore.loadManagements());
 </script>

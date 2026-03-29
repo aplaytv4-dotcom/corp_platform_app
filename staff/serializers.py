@@ -7,7 +7,7 @@ from staff.services import create_assignment, transfer_employee, update_assignme
 class PositionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Position
-        fields = ["id", "name", "short_name", "is_active"]
+        fields = ["id", "name", "short_name", "hierarchy_order", "is_active"]
 
 
 class PositionCreateSerializer(PositionListSerializer):

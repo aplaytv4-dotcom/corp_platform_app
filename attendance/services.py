@@ -16,6 +16,13 @@ def open_or_create_attendance_sheet(*, date, department, user):
         },
     )
     assignments = get_assignments_for_department_on_date(department, date)
+    active_employee_ids = {assignment.employee_id for assignment in assignments}
+
+    if active_employee_ids:
+        sheet.items.exclude(employee_id__in=active_employee_ids).delete()
+    else:
+        sheet.items.all().delete()
+
     existing_employee_ids = set(sheet.items.values_list("employee_id", flat=True))
     new_items = []
     for assignment in assignments:
@@ -61,7 +68,7 @@ def bulk_update_attendance_items(*, sheet_id, items, user):
             raise ValidationError({"absence_reason": "Absence reason is required for absent status."})
         item.status = status
         item.absence_reason = absence_reason if status == AttendanceSheetItem.Status.ABSENT else None
-        item.note = payload.get("note", "")
+        item.note = payload.get("note", "") if status == AttendanceSheetItem.Status.ABSENT else ""
         item.full_clean()
         item.save()
 
