@@ -635,3 +635,263 @@ Frontend dev URL:
 - On the Assignments screen, records are historical. The UI now shows current assignments by default, and closed records can be viewed separately through the filter.
 - On the attendance screen, if status is set to "present", the absence reason and note are now cleared automatically in the UI and also forcibly cleared on backend save.
 - In the daily report title, the second line with the report date is now shown in regular weight instead of bold.
+
+==================================================
+17. АКТУАЛЬНОЕ ТЗ НА BACKEND
+==================================================
+
+Этот раздел является актуальным описанием backend и заменяет исходное ТЗ выше, если между ними есть расхождения.
+
+Технологии:
+
+- Django
+- Django REST Framework
+- PostgreSQL
+- SimpleJWT
+- django-cors-headers
+- reportlab
+
+Архитектура:
+
+- модульная структура приложений: `accounts`, `organization`, `staff`, `attendance`, `common`
+- в каждом приложении используются `models.py`, `serializers.py`, `views.py`, `urls.py`, `permissions.py`, `services.py`, `selectors.py`
+- настройки базы и окружения берутся из `.env`
+- бизнес-логика вынесена в `services.py`
+- чтение и выборки вынесены в `selectors.py`
+- используется `TimeStampedModel`
+- soft delete реализован через `is_active`
+- операции записи выполняются через транзакции
+- есть Django Admin для основных сущностей
+
+Фактические модели:
+
+accounts:
+- кастомный `User`
+- `username`
+- `password`
+- `full_name`
+- `role: admin / manager`
+- `scope_type: all / management / department`
+- `management`
+- `department`
+- `is_active`
+
+organization:
+- `Management`
+- `Department`
+
+staff:
+- `Position`
+- `StaffUnit`
+- `Employee`
+- `EmployeeAssignment`
+
+attendance:
+- `AbsenceReason`
+- `AttendanceSheet`
+- `AttendanceSheetItem`
+
+Фактические правила по staff:
+
+- у `Position` есть поле `hierarchy_order`, которое на frontend называется `Тарифная сетка`
+- чем выше значение тарифной сетки, тем выше должность
+- значение тарифной сетки задаётся вручную при создании/редактировании должности
+- `EmployeeAssignment` хранит историю назначений; старые записи закрываются, а не удаляются
+- одновременно не может быть двух текущих назначений у одного сотрудника
+- одновременно не может быть двух текущих сотрудников на одной штатной единице
+
+Фактические правила по attendance:
+
+- в табель попадают только активные сотрудники с активными назначениями на активных штатных единицах
+- при повторном открытии табеля устаревшие строки автоматически удаляются
+- `status = absent` требует причину отсутствия
+- `status = present` принудительно очищает `absence_reason` и `note`
+- нельзя создать два табеля на одну дату и один отдел
+
+Сервисы бизнес-логики:
+
+- `open_or_create_attendance_sheet(date, department, user)`
+- `bulk_update_attendance_items(sheet_id, items, user)`
+- `transfer_employee(...)`
+- `close_assignment(...)`
+
+Отчёты:
+
+- daily: HTML / Word / PDF
+- summary: HTML / Word / PDF
+- отчёты локализуются по `lang=ru/uz`
+- PDF формируется через `reportlab` с Unicode-шрифтом
+- daily report содержит:
+  - отдел
+  - блок `По штату / Присутствуют / Отсутствуют`
+  - причины отсутствия с Ф.И.О.
+  - таблицу с фактической должностью
+  - блок подписи
+- подписант daily report выбирается из активных сотрудников отдела на дату отчёта
+- сотрудники, отмеченные в табеле как отсутствующие, не могут быть выбраны как подписанты
+- выбор подписанта идёт по максимальному значению тарифной сетки
+- в подписи выводятся фактическая должность и короткое Ф.И.О.
+
+Актуальные backend endpoints:
+
+Auth:
+- `POST /api/auth/login/`
+- `POST /api/auth/refresh/`
+- `GET /api/auth/me/`
+- `POST /api/auth/change-password/`
+
+Core:
+- `/api/users/`
+- `/api/managements/`
+- `/api/departments/`
+- `/api/positions/`
+- `/api/staff-units/`
+- `/api/employees/`
+- `/api/assignments/`
+
+Attendance:
+- `POST /api/attendance-sheets/open-or-create/`
+- `GET /api/attendance-sheets/{id}/`
+- `PATCH /api/attendance-sheets/{id}/bulk-update/`
+
+Assignments:
+- `POST /api/assignments/transfer/`
+- `PATCH /api/assignments/{id}/close/`
+
+Absence Reasons:
+- `GET /api/absence-reasons/`
+- `POST /api/absence-reasons/`
+- `PATCH /api/absence-reasons/{id}/`
+
+Reports:
+- `GET /api/reports/daily-attendance-html/`
+- `GET /api/reports/daily-attendance-word/`
+- `GET /api/reports/daily-attendance-pdf/`
+- `GET /api/reports/summary-html/`
+- `GET /api/reports/summary-word/`
+- `GET /api/reports/summary-pdf/`
+
+Права доступа:
+
+- admin: полный доступ
+- manager + department: доступ только к своему отделу
+- manager + management: доступ ко всем отделам своего управления
+
+
+==================================================
+18. АКТУАЛЬНОЕ ТЗ НА FRONTEND
+==================================================
+
+Этот раздел является актуальным описанием frontend и заменяет исходное ТЗ выше, если между ними есть расхождения.
+
+Технологии:
+
+- Vue 3
+- Pinia
+- Vue Router
+- axios
+- Vue I18n
+- Composition API
+- Vite
+
+Структура `frontend/src`:
+
+- `api/`
+- `assets/`
+- `components/`
+- `composables/`
+- `layouts/`
+- `modules/`
+- `router/`
+- `stores/`
+- `views/`
+- `i18n/`
+- `utils/`
+
+Layouts:
+
+- `AuthLayout`
+- `MainLayout`
+
+MainLayout содержит:
+
+- боковое меню
+- переключатель языка `RU / UZ`
+- имя пользователя
+- пункты `Профиль` / `Выйти`
+
+Маршруты:
+
+Общие:
+- `/login`
+- `/attendance`
+- `/profile`
+
+Для всех авторизованных:
+- `/attendance`
+- `/employees`
+- `/absence-reasons`
+- `/reports/preview`
+
+Только для admin:
+- `/users`
+- `/managements`
+- `/departments`
+- `/positions`
+- `/staff-units`
+- `/assignments`
+
+Frontend работает строго поверх существующего REST API backend.
+
+Фактические экраны:
+
+- `Login`
+- `Attendance`
+- `Employees`
+- `Absence Reasons`
+- `Users`
+- `Managements`
+- `Departments`
+- `Positions`
+- `Staff Units`
+- `Assignments`
+- `Profile`
+- `Report Preview`
+
+Фактическое поведение экранов:
+
+Attendance:
+- это главный экран после входа
+- при `absent` показывается выбор причины
+- при `present` причина и примечание очищаются сразу на frontend
+- поле `Примечание` сделано компактным
+
+Assignments:
+- экран показывает историю назначений
+- по умолчанию отображаются только текущие записи
+- есть фильтр `Текущие / Закрытые / Все`
+- кнопка `Закрыть` показывается только для текущих назначений
+
+Positions:
+- в таблице и форме есть поле `Тарифная сетка`
+- значение задаётся вручную
+
+Report Preview:
+- открывается в текущем окне
+- кнопки `Word / PDF / Печать` есть только на этом экране
+- при переключении `RU / UZ` отчёт перезагружается
+- daily report показывает сводный блок, причины отсутствия, фактические должности и подпись замещающего сотрудника
+- в preview не должны попадать устаревшие строки с неактивных штатных единиц
+
+Языки интерфейса:
+
+- русский
+- узбекский
+
+UI / UX:
+
+- строгий деловой интерфейс
+- основной экран после входа: табель
+- у manager скрыты административные разделы
+- меню имеет hover / active подсветку
+- i18n применяется к основным CRUD-экранам и отчётам
