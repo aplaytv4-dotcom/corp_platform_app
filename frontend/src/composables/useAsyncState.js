@@ -1,4 +1,5 @@
 import { ref } from "vue";
+import { normalizeApiError } from "@/utils/apiErrors";
 
 export function useAsyncState(initialValue = null) {
   const data = ref(initialValue);
@@ -12,7 +13,7 @@ export function useAsyncState(initialValue = null) {
       data.value = await callback();
       return data.value;
     } catch (err) {
-      error.value = err?.response?.data?.detail || err?.message || "Unknown error";
+      error.value = normalizeApiError(err);
       throw err;
     } finally {
       loading.value = false;

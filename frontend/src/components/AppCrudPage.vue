@@ -2,7 +2,7 @@
   <div class="page-shell">
     <div class="page-card page-section">
       <AppPageHeader :title="title" :subtitle="subtitle">
-        <AppButton v-if="canCreate" @click="openCreate">{{ createLabel }}</AppButton>
+        <AppButton v-if="canCreate" @click="openCreate">{{ resolvedCreateLabel }}</AppButton>
       </AppPageHeader>
     </div>
 
@@ -18,6 +18,7 @@
           :placeholder="filter.placeholder || ''"
         />
       </div>
+      <p v-if="successMessage" class="success-text" style="margin-bottom: 16px;">{{ successMessage }}</p>
 
       <AppLoader v-if="loading" />
       <AppTable v-else :columns="columns" :rows="filteredRows">
@@ -66,7 +67,7 @@
       </div>
       <div v-if="submitError" class="form-submit-error">{{ submitError }}</div>
       <div class="toolbar-row" style="margin-top: 16px;">
-        <AppButton @click="submit">{{ saveLabel }}</AppButton>
+        <AppButton @click="submit">{{ resolvedSaveLabel }}</AppButton>
         <AppButton variant="secondary" @click="closeModal">{{ cancelLabel }}</AppButton>
       </div>
     </AppModal>
@@ -75,6 +76,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 
 import AppButton from "./AppButton.vue";
 import AppEmptyState from "./AppEmptyState.vue";
@@ -85,6 +87,7 @@ import AppPageHeader from "./AppPageHeader.vue";
 import AppSelect from "./AppSelect.vue";
 import AppTable from "./AppTable.vue";
 import AppTextarea from "./AppTextarea.vue";
+import { normalizeApiError } from "@/utils/apiErrors";
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -98,30 +101,34 @@ const props = defineProps({
   initialForm: { type: Object, default: () => ({}) },
   canCreate: { type: Boolean, default: false },
   canEdit: { type: Boolean, default: false },
-  createLabel: { type: String, default: "\u0421\u043e\u0437\u0434\u0430\u0442\u044c" },
-  saveLabel: { type: String, default: "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c" },
+  createLabel: { type: String, default: "" },
+  saveLabel: { type: String, default: "" },
   customFormComponent: { type: [Object, Function], default: null },
   customFormProps: { type: Object, default: () => ({}) },
   customCellKeys: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(["loaded"]);
+const { t } = useI18n();
 
-const emptyTitle = "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445";
-const cancelLabel = "\u041e\u0442\u043c\u0435\u043d\u0430";
+const emptyTitle = computed(() => t("common.empty"));
+const cancelLabel = computed(() => t("actions.cancel"));
+const resolvedCreateLabel = computed(() => props.createLabel || t("actions.create"));
+const resolvedSaveLabel = computed(() => props.saveLabel || t("actions.save"));
 
 const loading = ref(false);
 const rows = ref([]);
 const modalOpen = ref(false);
 const editingRow = ref(null);
 const submitError = ref("");
+const successMessage = ref("");
 const formState = reactive({});
 const filterState = reactive({});
 
-const booleanOptions = [
-  { value: true, label: "\u0410\u043a\u0442\u0438\u0432\u0435\u043d" },
-  { value: false, label: "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u0435\u043d" },
-];
+const booleanOptions = computed(() => [
+  { value: true, label: t("common.active") },
+  { value: false, label: t("common.inactive") },
+]);
 
 const componentMap = {
   AppInput,
@@ -130,9 +137,7 @@ const componentMap = {
 };
 
 const modalTitle = computed(() =>
-  editingRow.value
-    ? "\u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435"
-    : "\u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435",
+  editingRow.value ? t("actions.edit") : t("actions.create"),
 );
 
 const filteredRows = computed(() => {
@@ -183,6 +188,7 @@ async function loadRows() {
 function openCreate() {
   editingRow.value = null;
   submitError.value = "";
+  successMessage.value = "";
   resetForm();
   modalOpen.value = true;
 }
@@ -193,22 +199,11 @@ function closeModal() {
   submitError.value = "";
 }
 
-function normalizeErrorMessage(error) {
-  const data = error?.response?.data;
-  if (!data) return "Не удалось сохранить запись.";
-  if (typeof data === "string") return data;
-  if (Array.isArray(data)) return data.join(" ");
-  const parts = Object.entries(data).map(([key, value]) => {
-    const text = Array.isArray(value) ? value.join(" ") : String(value);
-    return key === "detail" ? text : `${key}: ${text}`;
-  });
-  return parts.join(" | ");
-}
-
 async function submit() {
   const allowedKeys = Object.keys(props.initialForm);
   const payload = Object.fromEntries(allowedKeys.map((key) => [key, formState[key]]));
   submitError.value = "";
+  successMessage.value = "";
   try {
     if (editingRow.value && props.updateFn) {
       await props.updateFn(editingRow.value.id, payload);
@@ -216,17 +211,22 @@ async function submit() {
       await props.createFn(payload);
     }
   } catch (error) {
-    submitError.value = normalizeErrorMessage(error);
+    submitError.value = normalizeApiError(error, {
+      fallbackMessage: t("common.saveFailed"),
+      t,
+    });
     return;
   }
   closeModal();
   await loadRows();
+  successMessage.value = t("common.saved");
 }
 
 function startEdit(row) {
   if (!props.canEdit) return;
   editingRow.value = row;
   submitError.value = "";
+  successMessage.value = "";
   resetForm(row);
   modalOpen.value = true;
 }

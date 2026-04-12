@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
@@ -31,11 +31,11 @@ const route = useRoute();
 const htmlContent = ref("");
 const frameRef = ref(null);
 
-const isDaily = route.query.type !== "summary";
+const isDaily = computed(() => route.query.type !== "summary");
 
 function buildParams() {
   const lang = locale.value || localStorage.getItem("ui.language") || "ru";
-  if (isDaily) {
+  if (isDaily.value) {
     return { sheet_id: route.query.sheet_id, lang };
   }
   return {
@@ -46,8 +46,9 @@ function buildParams() {
 }
 
 async function loadPreview() {
+  htmlContent.value = "";
   const params = buildParams();
-  const response = isDaily ? await reportsApi.dailyHtml(params) : await reportsApi.summaryHtml(params);
+  const response = isDaily.value ? await reportsApi.dailyHtml(params) : await reportsApi.summaryHtml(params);
   htmlContent.value = response.data;
 }
 
@@ -57,28 +58,28 @@ async function downloadBlob(request, filename) {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function downloadWord() {
-  return downloadBlob(isDaily ? reportsApi.dailyWord : reportsApi.summaryWord, isDaily ? "daily-report.doc" : "summary-report.doc");
+  return downloadBlob(isDaily.value ? reportsApi.dailyWord : reportsApi.summaryWord, isDaily.value ? "daily-report.docx" : "summary-report.docx");
 }
 
 function downloadPdf() {
-  return downloadBlob(isDaily ? reportsApi.dailyPdf : reportsApi.summaryPdf, isDaily ? "daily-report.pdf" : "summary-report.pdf");
+  return downloadBlob(isDaily.value ? reportsApi.dailyPdf : reportsApi.summaryPdf, isDaily.value ? "daily-report.pdf" : "summary-report.pdf");
 }
 
 function printReport() {
   frameRef.value?.contentWindow?.print();
 }
 
-onMounted(loadPreview);
 watch(
-  () => locale.value,
-  () => {
-    loadPreview();
-  },
+  [() => locale.value, () => route.fullPath],
+  loadPreview,
+  { immediate: true },
 );
 </script>
 

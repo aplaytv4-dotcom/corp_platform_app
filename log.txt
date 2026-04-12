@@ -1,0 +1,11 @@
+2026-04-12
+- Added missing Django migrations for accounts, attendance, organization, and staff so `makemigrations --check --dry-run` passes cleanly.
+- Fixed report preview behavior in the frontend so the preview reloads correctly when switching between daily and summary report routes.
+- Restored summary attendance report by period in the frontend by adding period date inputs and navigation to the existing summary report endpoints.
+- Added backend tests for daily HTML report, summary HTML report, and summary PDF report in `attendance/tests.py`.
+- Added shared frontend API error normalization helper in `frontend/src/utils/apiErrors.js`.
+- Updated `AttendanceView` to use localized error handling and removed broken hardcoded messages.
+- Updated `AppCrudPage` and `useAsyncState` to use unified API error formatting and localized success/error messages.
+- Added `PROJECT_DESCRIPTION.md` with a full project overview, architecture summary, access model, and report description.
+- Added `TECHNICAL_SPEC.md` with detailed developer-facing specification: structure, modules, entities, API map, workflows, run instructions, and roadmap.
+- Added `start_project.ps1` to start backend and frontend from the project root.
